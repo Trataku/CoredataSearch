@@ -13,7 +13,10 @@ class DocumentTableViewController: UITableViewController {
     @IBOutlet var documentsTableView: UITableView!
     
     var documents = [Document]()
+    var filteredDocuments = [Document]()
     let dateFormatter = DateFormatter()
+    
+    let searchController = UISearchController(searchResultsController: nil)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,6 +25,13 @@ class DocumentTableViewController: UITableViewController {
         
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .medium
+        
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Documents"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
+        navigationItem.hidesSearchBarWhenScrolling = false
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -52,6 +62,10 @@ class DocumentTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if isFiltering() {
+            return filteredDocuments.count
+        }
+        
         return documents.count
     }
     
@@ -59,7 +73,14 @@ class DocumentTableViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "documentCell", for: indexPath)
         
         if let cell = cell as? DocumentTableViewCell {
-            let document = documents[indexPath.row]
+            let document: Document
+            
+            if isFiltering(){
+                document = filteredDocuments[indexPath.row]
+            }else{
+                document = documents[indexPath.row]
+            }
+            
             cell.nameLabel.text = document.name
             cell.sizeLabel.text = String(document.size) + " bytes"
             //cell.modificationDateLabel.text = dateFormatter.string(from: document.modificationDate)
@@ -103,6 +124,29 @@ class DocumentTableViewController: UITableViewController {
         
         destination.existingDocument = documents[selectedRow]
     }
+    
+    func searchBarIsEmpty() -> Bool {
+        // Returns true if the text is empty or nil
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
+    
+    func filterContentForSearchText(_ searchText: String, scope: String = "All") {
+        filteredDocuments = documents.filter({( document : Document) -> Bool in
+            return document.name?.lowercased().contains(searchText.lowercased()) ?? true
+        })
+        
+        tableView.reloadData()
+    }
+    
+    func isFiltering() -> Bool {
+        return searchController.isActive && !searchBarIsEmpty()
+    }
+}
 
-
+extension DocumentTableViewController: UISearchResultsUpdating {
+    // MARK: - UISearchResultsUpdating Delegate
+    func updateSearchResults(for searchController: UISearchController) {
+        // TODO
+        filterContentForSearchText(searchController.searchBar.text!)
+    }
 }
