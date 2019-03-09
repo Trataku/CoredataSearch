@@ -112,7 +112,9 @@ class DocumentTableViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete{
-            deleteDocument(at: indexPath)
+            if !isFiltering(){
+                deleteDocument(at: indexPath)
+            }
         }
     }
     
