@@ -122,7 +122,12 @@ class DocumentTableViewController: UITableViewController {
                 return
         }
         
-        destination.existingDocument = documents[selectedRow]
+        if isFiltering(){
+            destination.existingDocument = filteredDocuments[selectedRow]
+        }
+        else{
+            destination.existingDocument = documents[selectedRow]
+        }
     }
     
     func searchBarIsEmpty() -> Bool {
@@ -131,9 +136,10 @@ class DocumentTableViewController: UITableViewController {
     }
     
     func filterContentForSearchText(_ searchText: String, scope: String = "All") {
-        filteredDocuments = documents.filter({( document : Document) -> Bool in
-            return document.name?.lowercased().contains(searchText.lowercased()) ?? true
-        })
+        
+        let searchPredicate = NSPredicate(format: "name contains[c] %@ OR content contains[c] %@", argumentArray: [searchText, searchText])
+        
+        filteredDocuments = documents.filter { searchPredicate.evaluate(with: $0) }
         
         tableView.reloadData()
     }
